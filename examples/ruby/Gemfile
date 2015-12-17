@@ -6,3 +6,5 @@ gem "rake"
 gem "rest-client"
 gem 'dotenv'
 gem 'json'
+gem 'activesupport'
+gem 'colorize'
