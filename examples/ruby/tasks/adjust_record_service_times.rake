@@ -4,6 +4,8 @@ require_relative '../services/record_service'
 require_relative '../services/service_time_service'
 require 'active_support/time'
 require 'colorize'
+require 'thread/pool'
+require 'thread/future'
 
 desc "Adjusts service date times of old records to match with currently configured service times"
 task :adjust_record_service_times do
@@ -22,10 +24,12 @@ end
 private
 
 def run(query_options={}, mappings, campus, dry_run)
+  pool = Thread.pool(10)
   time_to_service_time = ServiceTimeService.find_by_hh_mm(mappings.values.to_set, query_options, campus)
   processed = 0
   modified = 0
   failed = 0
+  futures = []
   RecordService.get_all(query_options).each do |record|
     processed += 1
     original_date = record["service_date_time"]
@@ -39,18 +43,25 @@ def run(query_options={}, mappings, campus, dry_run)
         fields = {"service_time_id" => service_time["id"],
                   "service_date_time" => new_date_time}
         log(record, fields)
-        begin
-          RecordService.update(record["id"], fields) unless dry_run
-          write(record, "successful")
-          puts "Edited #{from} -> #{to} for #{record["category"]["name"]}: #{record["value"]}".green
-          modified += 1
-        rescue RestClient::UnprocessableEntity => e
-          write(record, "errors")
-          puts "Couldn't update record with id #{record["id"]} - maybe there's also a record with the correct service time for the same day?".red
-          failed += 1
-        end
+        f = pool.future {
+          begin
+            RecordService.update(record["id"], fields) unless dry_run
+            write(record, "successful")
+            puts "Edited #{from} -> #{to} for #{record["category"]["name"]}: #{record["value"]}".green
+            modified += 1
+          rescue RestClient::UnprocessableEntity => e
+            write(record, "errors")
+            puts "Couldn't update record with id #{record["id"]} - maybe there's also a record with the correct service time for the same day?".red
+            failed += 1
+          end
+        }
+        futures += [f]
       end
     end
+  end
+  # wait for tasks to complete
+  futures.each do |f|
+    ~f
   end
   puts "Processed total #{processed} records. Adjusted times for #{modified} records. Failed to adjust #{failed} records"
 
