@@ -1,8 +1,3 @@
-require_relative '../services/campus_service'
-require_relative '../services/category_service'
-require_relative '../services/record_service'
-require_relative '../services/service_time_service'
-
 desc "Lists service date times of records"
 task :list_record_service_times do
 

@@ -1,7 +1,3 @@
-require_relative '../services/campus_service'
-require_relative '../services/category_service'
-require_relative '../services/record_service'
-require_relative '../services/service_time_service'
 require 'active_support/time'
 require 'colorize'
 require 'thread/pool'

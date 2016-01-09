@@ -1,5 +1,3 @@
-require_relative '../services/user_service'
-
 desc "Lists the users of the organization"
 task :list_users do
 
