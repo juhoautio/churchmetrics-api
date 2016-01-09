@@ -1,0 +1,7 @@
+#!/usr/bin/env rake
+# import all the rake tasks
+Dir.glob('tasks/*.rake').each { |r| import r }
+# import the services classes so that no need to 'require' in the rake tasks
+Dir.glob('lib/churchmetrics/*.rb').each { |r| import r }
+require 'dotenv'
+Dotenv.load
