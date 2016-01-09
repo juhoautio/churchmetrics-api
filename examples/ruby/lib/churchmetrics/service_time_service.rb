@@ -2,15 +2,15 @@ require_relative 'base_service'
 
 class ServiceTimeService < BaseService
 
-  def self.get_all(query_options={}, campus=nil)
-    BaseService.get_all("service_times", query_options).lazy.select { |st| not campus or campus == st["campus"]["slug"] }
+  def self.resource_name
+    "service_times"
   end
 
   # find service time objects for a set of time of day values (HH:MM)
   # excludes event service times
   def self.find_by_hh_mm(time_of_day_wanted, query_options={}, campus=nil)
     time_to_service_time = {}
-    service_times = get_all query_options, campus
+    service_times = get_all(query_options).lazy.select { |st| not campus or campus == st["campus"]["slug"] }
     service_times = service_times.lazy.select { |st| not st["event"] }
     service_times.each do |st|
       time_of_day = time_in_hh_mm(st["time_of_day"])
